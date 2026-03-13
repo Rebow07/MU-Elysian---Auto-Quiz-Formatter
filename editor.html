@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elysian MU - Formatador de Quiz</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary: #bb86fc;
+            --primary-hover: #9965f4;
+            --border: #333;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 950px;
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            background-color: #000;
+            color: #00ff00;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            box-sizing: border-box;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .options label {
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ccc;
+        }
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+        .botoes-acao {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background-color: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        .btn-limpar {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        .btn-limpar:hover {
+            background-color: rgba(187, 134, 252, 0.1);
+            color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>MU Elysian  - Auto Quiz Formatter</h1>
+    <p class="subtitle">Corrige a formatação para o Bloco de Notas do Windows Server 2012 e salva diretamente em ANSI com cabeçalho.</p>
+    
+    <textarea id="rawInput" placeholder="Cole aqui apenas as perguntas desconfiguradas..."></textarea>
+    
+    <div class="controls">
+        <div class="options">
+            <label>
+                <input type="checkbox" id="removeAccents" checked>
+                Remover acentos
+            </label>
+        </div>
+        <div class="botoes-acao">
+            <button class="btn-limpar" onclick="limparTexto()">Limpar Texto</button>
+            <button onclick="formatarEBaixar()">Formatar e Baixar TXT</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function limparTexto() {
+        document.getElementById('rawInput').value = '';
+        document.getElementById('rawInput').focus();
+    }
+
+    function removeAcentos(texto) {
+        return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function formatarEBaixar() {
+        let input = document.getElementById('rawInput').value;
+        let remove = document.getElementById('removeAccents').checked;
+
+        if (!input.trim()) {
+            alert("Por favor, cole algum texto na caixa antes de formatar.");
+            return;
+        }
+
+        if (remove) {
+            input = removeAcentos(input);
+        }
+
+        const regex = /(?:^|\s)(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+("[^"]+")\s+("[^"]+")/g;
+        let match;
+        let records = [];
+
+        while ((match = regex.exec(input)) !== null) {
+            records.push({
+                id: match[1],
+                wc: match[2],
+                wp: match[3],
+                gp: match[4],
+                q: match[5],
+                a: match[6]
+            });
+        }
+
+        if (records.length === 0) {
+            alert("Nenhuma pergunta válida encontrada. Verifique se o formato copiado possui ID, Prêmios e os textos entre aspas.");
+            return;
+        }
+
+        let output = `//=================================================================================================================\r\n`;
+        output += `// Custom Auto Quiz System\r\n`;
+        output += `//=================================================================================================================\r\n`;
+        output += `0\r\n`;
+        output += `//==========================================================\r\n`;
+        output += `//Index   Year   Month   Day   DoW   Hour   Minute   Second\r\n`;
+        output += `//==========================================================\r\n`;
+        output += `0         * * * * * 40       0\r\n`;
+        output += `end\r\n`;
+        output += `\r\n`;
+        output += `1\r\n`;
+        output += `//==========================================================\r\n`;
+        output += `//Index   Name                        AlarmTime   EventTime\r\n`;
+        output += `//==========================================================\r\n`;
+        output += `0         "Quiz"                        3           3\r\n`;
+        output += `end\r\n`;
+        output += `//=================================================================================================================\r\n`;
+        output += `// Questions\r\n`;
+        output += `//=================================================================================================================\r\n`;
+        output += `//  ID      ->  Question ID\r\n`;
+        output += `//  WC      ->  Premia em WCoinC\r\n`;
+        output += `//  WP      ->  Premia em WCoinP\r\n`;
+        output += `//  GP      ->  Premia em Goblin Point\r\n`;
+        output += `//  Question->  Pergunta\r\n`;
+        output += `//  Answer  ->  Resposta\r\n`;
+        output += `//=================================================================================================================\r\n`;
+        output += `// Obs: Evite usar respostas que possuem acentos.\r\n`;
+        output += `//=================================================================================================================\r\n`;
+        output += `//=================================================================================================================\r\n`;
+        // Ajustei o cabeçalho para acompanhar o novo espaçamento da pergunta
+        output += `//       #ID     #WC     #WP     #GP         #Question                                                                            #Answer\r\n`;
+        output += `//=================================================================================================================\r\n`;
+        output += `2\r\n`;
+
+        // Formatando cada linha com os novos espaçamentos
+        records.forEach(r => {
+            let id = r.id.padEnd(7, ' ');
+            let wc = r.wc.padEnd(7, ' ');
+            let wp = r.wp.padEnd(7, ' ');
+            let gp = r.gp.padEnd(11, ' ');
+            // Aumentei o espaço para a pergunta (de 60 para 85)
+            let q  = r.q.padEnd(85, ' ');
+            let a  = r.a;
+
+            output += `    ${id} ${wc} ${wp} ${gp} ${q} ${a}\r\n`;
+        });
+
+        output += `end\r\n`;
+
+        baixarComoAnsi(output, 'Custom_Auto_Quiz.txt');
+    }
+
+    function baixarComoAnsi(texto, nomeArquivo) {
+        let buffer = new Uint8Array(texto.length);
+        
+        for (let i = 0; i < texto.length; i++) {
+            let charCode = texto.charCodeAt(i);
+            if (charCode === 8220 || charCode === 8221) charCode = 34; 
+            buffer[i] = charCode < 256 ? charCode : 63;
+        }
+
+        let blob = new Blob([buffer], { type: 'application/octet-stream' });
+        let link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = nomeArquivo;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
